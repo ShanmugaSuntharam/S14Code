@@ -138,6 +138,7 @@ const R={
   Modal:(c,x)=>{const e=$("div","Card");if(c.title){const h=$("div","ct");h.append(T(c.title));e.append(h);}kids(c,x,e);return e;},
   ApprovalCard:(c,x)=>{const e=$("div","Card");const s=$("div","ct");s.append(T(resolve(c.summary,x.dm)||"Approve?"));const pre=document.createElement("pre");pre.style.cssText="font-size:12px;background:var(--surface-alt);padding:8px;border-radius:8px;overflow:auto";pre.append(T(JSON.stringify(resolve(c.params,x.dm),null,2)));const ok=$("button","actbtn");ok.append(T("Approve"));ok.onclick=()=>choose("approve");e.append(s,pre,ok);return e;},
   Map:(c,x)=>{const e=$("div","chart");const t=$("div","ct");t.append(T(c.title||"map"));e.append(t,pins(resolve(c.points,x.dm)||[]));return e;},
+  CodeDiff:(c,x)=>{const e=$("div","chart");const t=$("div","ct");t.append(T(c.title||"diff"));e.append(t,diffLines(resolve(c.diff,x.dm)));return e;},
 };
 function kids(c,x,e){for(const id of (c.children||[])){const ch=x.byId[id];if(ch)e.append(node(ch,x));}}
 function node(c,x){const f=R[c.type];if(!f){const s=$("div");s.style.cssText="color:var(--red-ink);font-family:var(--font-mono);font-size:11px";s.append(T("[skipped "+c.type+"]"));return s;}return f(c,x);}
@@ -169,6 +170,16 @@ function pins(points){const ns="http://www.w3.org/2000/svg",w=300,h=160;const s=
     const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",x);dot.setAttribute("cy",y);dot.setAttribute("r",3.5);dot.setAttribute("fill","var(--accent)");dot.setAttribute("stroke","var(--surface)");dot.setAttribute("stroke-width","1");s.append(dot);
     const lb=document.createElementNS(ns,"text");lb.setAttribute("x",x+5);lb.setAttribute("y",y-5);lb.setAttribute("font-size","9");lb.setAttribute("fill","var(--ink-muted)");lb.textContent=p.label==null?"":String(p.label);s.append(lb);});
   return s;}
+// A unified diff drawn one line at a time as a plain text node, colored by
+// its leading +/-/@@ marker via CSS only. The diff content — which could
+// contain anything, including literal markup — is never parsed as HTML.
+function diffLines(raw){const box=$("div");box.style.cssText="font-family:var(--font-mono);font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;border:1px solid var(--rule);border-radius:8px";
+  String(raw==null?"":raw).split(/\r?\n/).forEach(line=>{const row=$("div");row.style.cssText="padding:1px 8px";
+    if(line.startsWith("+++")||line.startsWith("---")||line.startsWith("@@")){row.style.color="var(--ink-muted)";}
+    else if(line.startsWith("+")){row.style.background="var(--green-soft)";row.style.color="var(--green-ink)";}
+    else if(line.startsWith("-")){row.style.background="var(--red-soft)";row.style.color="var(--red-ink)";}
+    row.append(T(line));box.append(row);});
+  return box;}
 function table(c,x){const wrap=$("div");const cols=(c.columns||"").split(",").map(s=>s.trim());const rows=resolve(c.rows,x.dm)||[];const t=$("table");const tr=$("tr");cols.forEach(col=>{const th=$("th");th.append(T(col));tr.append(th);});t.append(tr);rows.forEach(r=>{const rr=$("tr");cols.forEach(col=>{const td=$("td");td.append(T(r[col]));rr.append(td);});t.append(rr);});wrap.append(t);return wrap;}
 function tabs(c,x){const wrap=$("div");const nav=$("div","tabs");const body=$("div");wrap.append(nav,body);const tabIds=c.children||[];function show(i){body.textContent="";const cc=x.byId[tabIds[i]];if(cc)body.append(node(cc,x));[...nav.children].forEach((b,j)=>b.classList.toggle("on",i===j));}
   (String(c.labels||"").split(",")).forEach((lab,i)=>{const b=$("button");b.append(T(lab.trim()||("tab "+(i+1))));b.onclick=()=>show(i);nav.append(b);});
