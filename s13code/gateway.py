@@ -17,7 +17,12 @@ class GatewayClient:
         payload: dict[str, Any] = {
             "messages": [{"role": "user", "content": prompt}],
             "system": system,
-            "max_tokens": 700,
+            # A rich multi-step goal (e.g. "show X, then let me drill into Y,
+            # then Z...") can legitimately need more than a short summary's
+            # worth of structured JSON. 700 was tight enough to truncate
+            # mid-JSON on exactly this kind of goal, which then cascades into
+            # a degenerate compose_surface call with almost no real data.
+            "max_tokens": 2000,
             "temperature": 0,
             "reasoning": "off",
             "agent": "s13_answer",
