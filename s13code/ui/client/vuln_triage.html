@@ -140,6 +140,7 @@ const R={
   ApprovalCard:(c,x)=>{const e=$("div","Card");const s=$("div","ct");s.append(T(resolve(c.summary,x.dm)||"Approve?"));const pre=document.createElement("pre");pre.style.cssText="font-size:12px;background:var(--surface-alt);padding:8px;border-radius:8px;overflow:auto";pre.append(T(JSON.stringify(resolve(c.params,x.dm),null,2)));const ok=$("button","actbtn");ok.append(T("Approve"));ok.onclick=()=>choose("approve");e.append(s,pre,ok);return e;},
   Map:(c,x)=>{const e=$("div","chart");const t=$("div","ct");t.append(T(c.title||"map"));e.append(t,pins(resolve(c.points,x.dm)||[]));return e;},
   CodeDiff:(c,x)=>{const e=$("div","chart");const t=$("div","ct");t.append(T(c.title||"diff"));e.append(t,diffLines(resolve(c.diff,x.dm)));return e;},
+  CommentThread:(c,x)=>{const e=$("div","chart");const t=$("div","ct");t.append(T(c.title||"comments"));e.append(t,comments(resolve(c.comments,x.dm)||[]));return e;},
 };
 function kids(c,x,e){for(const id of (c.children||[])){const ch=x.byId[id];if(ch)e.append(node(ch,x));}}
 function node(c,x){const f=R[c.type];if(!f){const s=$("div");s.style.cssText="color:var(--red-ink);font-family:var(--font-mono);font-size:11px";s.append(T("[skipped "+c.type+"]"));return s;}return f(c,x);}
@@ -180,6 +181,17 @@ function diffLines(raw){const box=$("div");box.style.cssText="font-family:var(--
     else if(line.startsWith("+")){row.style.background="var(--green-soft)";row.style.color="var(--green-ink)";}
     else if(line.startsWith("-")){row.style.background="var(--red-soft)";row.style.color="var(--red-ink)";}
     row.append(T(line));box.append(row);});
+  return box;}
+// Each comment's author/time/text are drawn as separate text nodes — never
+// concatenated into one string and never set as markup.
+function comments(list){const box=$("div");box.style.cssText="display:flex;flex-direction:column;gap:10px";
+  (list||[]).forEach(cm=>{const row=$("div");row.style.cssText="border-left:2px solid var(--rule-strong);padding-left:10px";
+    const head=$("div");head.style.cssText="display:flex;gap:8px;align-items:baseline;font-size:12px";
+    const author=$("span");author.style.cssText="font-weight:600;color:var(--ink)";author.append(T((cm||{}).author==null?"":String(cm.author)));
+    const time=$("span");time.style.cssText="color:var(--ink-muted);font-family:var(--font-mono)";time.append(T((cm||{}).time==null?"":String(cm.time)));
+    head.append(author,time);
+    const body=$("div");body.style.cssText="margin-top:2px";body.append(T((cm||{}).text==null?"":String(cm.text)));
+    row.append(head,body);box.append(row);});
   return box;}
 function table(c,x){const wrap=$("div");const cols=(c.columns||"").split(",").map(s=>s.trim());const rows=resolve(c.rows,x.dm)||[];const t=$("table");const tr=$("tr");cols.forEach(col=>{const th=$("th");th.append(T(col));tr.append(th);});t.append(tr);rows.forEach(r=>{const rr=$("tr");cols.forEach(col=>{const td=$("td");td.append(T(r[col]));rr.append(td);});t.append(rr);});wrap.append(t);return wrap;}
 function tabs(c,x){const wrap=$("div");const nav=$("div","tabs");const body=$("div");wrap.append(nav,body);const tabIds=c.children||[];function show(i){body.textContent="";const cc=x.byId[tabIds[i]];if(cc)body.append(node(cc,x));[...nav.children].forEach((b,j)=>b.classList.toggle("on",i===j));}
