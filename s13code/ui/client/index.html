@@ -138,6 +138,7 @@ const RENDERERS = {
   Map:(c,ctx)=>{const e=$("div","chart");const t=$("div","ct");t.append(text(c.title||"map"));e.append(t);
     e.append(mapSvg(resolve(c.points,ctx.dm)||[]));return e;},
   CodeDiff:(c,ctx)=>renderDiff(c,ctx),
+  CommentThread:(c,ctx)=>renderComments(c,ctx),
 };
 
 function field(c,mk){const wrap=$("label","field");if(c.label){const l=$("span","lb");l.append(text(c.label));wrap.append(l);}wrap.append(mk());return wrap;}
@@ -232,6 +233,21 @@ function renderDiff(c,ctx){const e=$("div","chart");const t=$("div","ct");t.appe
     else if(line.startsWith("-")){row.style.background="var(--red-soft)";row.style.color="var(--red-ink)";}
     else{row.style.color="var(--ink-body)";}
     row.append(text(line));box.append(row);});
+  e.append(box);return e;}
+
+// Each comment's author/time/text are drawn as separate text nodes — never
+// concatenated into one string and never set as markup. An author name or
+// body containing literal HTML stays literal, exactly like every other
+// bound string in this client.
+function renderComments(c,ctx){const e=$("div","chart");const t=$("div","ct");t.append(text(c.title||"comments"));e.append(t);
+  const box=$("div");box.style.cssText="display:flex;flex-direction:column;gap:10px;margin-top:6px";
+  (resolve(c.comments,ctx.dm)||[]).forEach(cm=>{const row=$("div");row.style.cssText="border-left:2px solid var(--rule-strong);padding-left:10px";
+    const head=$("div");head.style.cssText="display:flex;gap:8px;align-items:baseline;font-size:12px";
+    const author=$("span");author.style.cssText="font-weight:600;color:var(--ink)";author.append(text((cm||{}).author==null?"":String(cm.author)));
+    const time=$("span");time.style.cssText="color:var(--ink-muted);font-family:var(--font-mono)";time.append(text((cm||{}).time==null?"":String(cm.time)));
+    head.append(author,time);
+    const body=$("div");body.style.cssText="margin-top:2px";body.append(text((cm||{}).text==null?"":String(cm.text)));
+    row.append(head,body);box.append(row);});
   e.append(box);return e;}
 
 function renderApproval(c,ctx){const e=$("div","Approval");const sm=$("div","sm");sm.append(text(resolve(c.summary,ctx.dm)));
