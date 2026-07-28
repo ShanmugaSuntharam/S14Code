@@ -233,4 +233,18 @@ async def app_viewer():
     path = Path(__file__).parent / "client" / "app.html"
     if not path.exists():
         raise HTTPException(500, "app viewer missing")
-    return path.read_text()
+    return path.read_text(encoding="utf-8")
+
+
+@router.get("/vuln-triage", response_class=HTMLResponse)
+@router.get("/vuln-triage/", response_class=HTMLResponse)
+async def vuln_triage_viewer():
+    """A UI-only vulnerability-triage assistant: same protocol and render
+    engine as /app, forked with a different seed prompt and chrome. Every
+    turn is a composed, catalog-validated interface; a tap becomes the next
+    turn's goal. No domain-specific server code — the generic compose_answer
+    path (content role + compose_surface) carries the whole application."""
+    path = Path(__file__).parent / "client" / "vuln_triage.html"
+    if not path.exists():
+        raise HTTPException(500, "vuln triage viewer missing")
+    return path.read_text(encoding="utf-8")
