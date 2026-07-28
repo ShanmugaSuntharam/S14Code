@@ -26,6 +26,9 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
+
+import httpx
 
 S13CODE = Path(os.environ.get("S13CODE_PATH") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(S13CODE))
@@ -37,6 +40,30 @@ from s13code.runtime import S13Runtime  # noqa: E402
 OUT = Path(__file__).parent / "harness_run_codediff.json"
 TASK = ("Build an interface reviewing a proposed fix for an off-by-one bug in a "
         "Python loop, including the code diff.")
+
+
+async def _content_llm(prompt: str, system: str) -> dict[str, Any]:
+    """Same call GatewayClient.complete() makes, but with a higher max_tokens.
+
+    GatewayClient.complete() hardcodes max_tokens=700 for every content-role
+    call, which is plenty for short arrays (locations, comments) but truncates
+    a code-diff-shaped answer (title + intro + a multi-line unified diff) mid-
+    JSON. That constant is shared framework code used by every content call,
+    not something this proof should change; this local override is scoped to
+    just this script's run.
+    """
+    base_url = os.getenv("GLC_BASE_URL", "http://127.0.0.1:8111").rstrip("/")
+    payload = {
+        "messages": [{"role": "user", "content": prompt}], "system": system,
+        "max_tokens": 2000, "temperature": 0, "reasoning": "off", "agent": "s13_answer",
+        "provider": os.getenv("S13_GATEWAY_PROVIDER", "gemini"),
+    }
+    async with httpx.AsyncClient(timeout=120) as client:
+        response = await client.post(f"{base_url}/v1/chat", json=payload)
+    if response.status_code >= 400:
+        raise RuntimeError(f"GLC /v1/chat returned {response.status_code}: {response.text[:500]}")
+    body = response.json()
+    return {"text": body.get("text", ""), "provider": body.get("provider"), "model": body.get("model")}
 
 
 async def main() -> int:
@@ -56,7 +83,7 @@ async def main() -> int:
     result = await runtime.run(
         prompt=TASK,
         scope=MemoryScope("s14-proof", "harness-codediff", "composer", "s13code"),
-        llm=lambda prompt, system: gateway.complete(prompt, system),
+        llm=_content_llm,
         source_uri="proof://harness/compose_surface_codediff",
         source_author="s14-proof",
         respond_as="ui",
