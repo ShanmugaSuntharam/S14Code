@@ -1,0 +1,49 @@
+{
+  "accepted": [
+    "approval1",
+    "notice1",
+    "root"
+  ],
+  "rejections": [
+    {
+      "component_id": "evil-markup",
+      "field": "title",
+      "invariant": "data-not-code",
+      "reason": "value carries markup"
+    },
+    {
+      "component_id": "evil-action",
+      "field": "onPress",
+      "invariant": "event",
+      "reason": "unregistered action 'delete_all_data'"
+    },
+    {
+      "component_id": "evil-handler",
+      "field": "onclick",
+      "invariant": "data-not-code",
+      "reason": "event-handler property is never allowed"
+    },
+    {
+      "component_id": "evil-jsurl",
+      "field": "src",
+      "invariant": "data-not-code",
+      "reason": "value is a script/data URL"
+    },
+    {
+      "component_id": "evil-unknown-type",
+      "field": "type",
+      "invariant": "catalog",
+      "reason": "unknown component type 'Iframe'"
+    },
+    {
+      "component_id": "evil-inline-binding",
+      "field": "text",
+      "invariant": "data-not-code",
+      "reason": "value carries markup"
+    }
+  ],
+  "all_attacks_rejected": true,
+  "invariants_correct": true,
+  "safe_still_renders": true,
+  "no_attack_leaked": true
+}
