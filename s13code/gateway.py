@@ -21,8 +21,11 @@ class GatewayClient:
             # then Z...") can legitimately need more than a short summary's
             # worth of structured JSON. 700 was tight enough to truncate
             # mid-JSON on exactly this kind of goal, which then cascades into
-            # a degenerate compose_surface call with almost no real data.
-            "max_tokens": 2000,
+            # a degenerate compose_surface call with almost no real data. 2000
+            # was still not enough when the composer front-loads every stage
+            # (e.g. Tabs covering fix/community/exploit-map/approval) into a
+            # single surface instead of one step at a time.
+            "max_tokens": 4000,
             "temperature": 0,
             "reasoning": "off",
             "agent": "s13_answer",
